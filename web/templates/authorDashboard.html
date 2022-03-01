@@ -1,0 +1,287 @@
+{% extends 'template.html' %}
+
+<!--
+MIT License
+
+Copyright (c) 2020 tdbowman-CompSci-F2020
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+{% block head %}
+<!-- Imports for the bar chart -->
+<!-- Load c3.css first -->
+<link href="../static/js/libraries/c3-0.7.20/c3.css" rel="stylesheet">
+
+<!-- Load d3 second -->
+<script src="../static/js/libraries/d3.v5/d3.v5.min.js"></script>
+
+<!-- Load c3 last (because it depends on d3) -->
+<script src="../static/js/libraries/c3-0.7.20/c3.min.js"></script>
+
+<!-- More Javascript Mohammad wrote to adjust the chart after it loads -->
+<script src="../static/js/adjustAuthorDashboard.js"></script>
+
+<!-- Load Ajax library to let webpage run asynchronus functions -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script>
+  $(function(){
+    // Grab the tspan elements and search through the array.
+    let x = document.getElementsByTagName("tspan");
+    for (let i = 0; i < x.length; i++) {
+        // If the value of the text is equal to the input submitted by the user, change the color to red, increase the size and bold the label.
+        if (x[i].innerHTML === '{{yearInput}}') {
+            x[i].style.fill = "#A15951";
+            x[i].style.font = "bold 18px sans-serif";
+        }
+    }
+  });
+</script>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <div class="row">
+    <h1>Author Dashboard</h1>
+      
+    <!-- This is the left column-->
+      <div class="col-md-5">
+        <div id="pHead">
+          {{ author_name }}
+        </div>
+        <hr>
+        <div id="pContent">
+          <form class="form-inline perPages" method="post" action="{{ url_for('authorDashboard') }}?author_id={{ passed_author_id }}" >
+          <select name="perPage" id="perPage" class="resizedTextbox form-control" >
+              <option value="" disabled selected>Per Page</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+          </select>
+          <button type="submit" class=" resizedTextbox btn btn-default">Apply</button>
+          </form>
+          <table id="noBorders">
+          {{pagination.info}}
+          {{pagination.links}}
+
+          {% for author in author_article_list [article_start:article_end] %}
+          <tr class="row row-bordered">
+
+          <td class='item-data'>
+            <div class="AUD_articleTitle">
+              <a href="{{ url_for('articleDashboard') }}?DOI={{ author.objectID }}">{{ author.articleTitle }}</a>
+            </div>
+            <div class="AUD_journalName">
+              <strong>Journal:</strong>
+              <a href="{{ url_for('journalDashboard') }}?journalName={{ author.journalName }}">{{ author.journalName }}</a>
+            </div>
+            <div class="AUD_articleDate">
+              <strong>Date Published:</strong> {{ author.articleDate }}
+            </div>
+            <div class="AUD_authors">
+                 <strong> Author(s):</strong>
+                {% for auth in author.author_list%}
+                    {% if auth.name == author_name %}
+                        {% if auth == author.author_list[-1] %}
+                          {{ auth.name }}
+                        {% else %}
+                          {{ auth.name }},
+                        {% endif %}
+                    {% else %}
+                      {% if auth == author.author_list[-1] %}
+                        <a href="{{ url_for('authorDashboard') }}?author_id={{ auth.id }}">{{ auth.name }}</a>
+                      {% else %}
+                        <a href="{{ url_for('authorDashboard') }}?author_id={{ auth.id }}">{{ auth.name }}</a>,
+                      {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="AUD_DOI">
+              <strong>DOI:</strong>
+              <a href="https://doi.org/{{ author.objectID }}"target="_blank">{{ author.objectID }} &#8599;</a>
+            </div>
+            <br>
+            </td>
+            </tr>
+          {% endfor %}
+          </table>
+          {{pagination.links}}
+        </div>
+      </div> <!-- End the leftmost column-->
+      <br><br><br><br><br>
+      <h3 style="text-align: center;">Events for {{author_name}} over {{years_list[0]}} - {{years_list[-1]}}</h3>
+      <div class="col-sm-7" id="changeAfterChart">
+        <div id="chart"></div>
+      </div>
+    <div class="col-sm-7" id="yearFilter">
+
+      <form method="post" action="{{ url_for('authorDashboard') }}?author_id={{ passed_author_id }}" class="form-inline" name="YearRange" id="YearRange">
+        <!-- ***********Year Range Slider decomissioned *************** -->
+        <!-- <div id="slider"></div> -->
+        <label for="yearBox">Select a year (YYYY):</label>
+        <input type="text" name="year" id="yearBox" size="4" maxlength="4" pattern="\d{4}">
+        <input width="40%" type="submit" value="Update" class="form-control">
+      </form>
+    </div>
+  </div>
+</div>
+
+<br>
+
+<!-- Initialize articleDates and yearOnly -->
+<script>
+  let articleDates = [];
+  let yearOnly = '';
+</script>
+
+<!-- Iterate through the author_article_list and store the article dates into an array. Cast them to an integer. -->
+{% for date in author_article_list %}
+<script>
+  yearOnly = '{{date.articleDate}}';
+  yearOnly = yearOnly.slice(0,4);
+  articleDates.push(parseInt(yearOnly,10));
+</script>
+{% endfor %}
+
+<!-- Initialize the arrays as empty arrays -->
+<script>
+  cambiaevent=[];
+  crossrefevent = [];
+  dataciteevent = [];
+  f1000event = [];
+  hypothesisevent = [];
+  newsfeedevent = [];
+  redditevent = [];
+  redditlinksevent = [];
+  stackexchangeevent = [];
+  twitterevent = [];
+  webevent = [];
+  wikipediaevent = [];
+  wordpressevent = [];
+  years_list = [];
+</script>
+
+<!-- For each array, push each item from Jinja to Javascript array. This is the best method we have found.-->
+
+{% for year in years_list %}
+<script>
+  years_list.push("{{ year }}")
+</script>
+{% endfor %}
+
+{% for index in cambiaEventData %}   
+<script>
+  cambiaevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in crossrefEventData %}
+<script>
+  crossrefevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in dataciteEventData %}
+<script>
+  dataciteevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in f1000eventData %}
+<script>
+  f1000event.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in hypothesisEventData %}
+<script>
+  hypothesisevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in newsfeedEventData %}
+<script>
+  newsfeedevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in redditEventData %}
+<script>
+  redditevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in redditlinksEventData %}
+<script>
+  redditlinksevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in stackexchangeEventData %}
+<script>
+  stackexchangeevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in twitterEventData %}
+<script>
+  twitterevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in webEventData %}
+<script>
+  webevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in wikipediaEventData %}
+<script>
+  wikipediaevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+{% for index in wordpressEventData %}
+<script>
+  wordpressevent.push("{{ index }}");
+</script>
+{% endfor %}
+
+<!-- Load our Javascript for the bar chart -->
+<!--
+  #Author: 
+  #Name: Mohammad Tahmid 
+  #Lines 18-19, 247-264
+  #---------------------
+  #Date: 03/23/2021
+  #Description: Calls an ajax fucntion to handle loading all the information for the chart on the website. This makes it so
+                only the webpage with some of the metadata is loaded and displayed to the user instead waiting till the graph is loaded
+                with all the events in the database. 
+-->
+<script>
+  $(document).ready(function(){
+    $.ajaxSetup({
+      cache: true
+    });
+
+    $.getScript("../static/js/chartScript.js");
+  });
+</script>
+{% endblock %}

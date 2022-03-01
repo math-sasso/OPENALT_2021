@@ -1,0 +1,152 @@
+{% extends 'adminTemplate.html' %}
+<!-- Author: Darpan (whole file)-->
+<!--
+MIT License
+
+Copyright (c) 2020 tdbowman-CompSci-F2020
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+{% block head %}
+<script>
+
+    $(function () {
+
+        // Initialize variables and reference to the resultsButton and the current value of the email box
+        let $loginButton = $("#loginButton");
+        let pw = "{{ pw }}"
+        
+
+
+        // If the email box is empty, prompt the user to enter a query.
+        $loginButton.click(function () {
+            let $pwValue = $("#pw_input").val();
+
+            // check if email field is empty
+            if ($pwValue === '') {
+
+                $("#no_pass").dialog({
+                    title: "ERROR",
+                    modal: true,
+                    minWidth: 700,
+                    minHeight: 200,
+                    buttons: {
+                        'Send New Password': function () {
+                            $(location).attr('href', "/admin");
+                        },
+                        Ok: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
+                return false;
+            }
+            else if ($pwValue != pw) {
+
+                $("#invalid_pass").dialog({
+                    title: "ERROR",
+                    modal: true,
+                    minWidth: 700,
+                    minHeight: 200,
+                    buttons: {
+                        'Send New Password': function () {
+                            $(location).attr('href', "/admin");
+                        },
+                        Ok: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
+                return false;
+            }
+
+        });
+
+    });
+
+</script>
+{% endblock %}
+<!-- Anything you put here will be in the body-->
+{% block body %}
+<title>Admin Login</title>
+
+<body style="background-image: url('../static/images/wsu.jpg'); background-repeat: repeat;">
+    <div class="center-screen" style="padding-top: 15px;">
+        <div class="center-screen" style="padding: 10px;">
+            <div style="width: 550px; border-radius: 25px; padding: 0px; background-color: rgba(60, 65, 70, 0.9); "
+                class="center-screen">
+                <h3 style="text-align: center; color: aliceblue;"><b>Instructions</b></h3>
+                <p1 style="text-align:left; color: aliceblue;">
+                    <ol>
+                        <li>The admin email account has been sent a password. </li>
+                        <li>Enter it below to login.</li>
+                    </ol>
+                </p1>
+                <br>
+
+
+            </div>
+
+        </div>
+        <br>
+        <div
+            style="width: 550px; border-radius: 25px; padding: 10px; background-color: rgba(60, 65, 70, 0.9); text-align: center;">
+
+            <h1 style="text-align: center; color: aliceblue; padding-bottom: 10px;"><b>Enter Password:</b></h1>
+
+            <form action="{{ url_for('admin') }}" method="POST" style="text-align: center; align-items: center;">
+                <input type="password" id="pw_input" name="pw_input" placeholder="Password" style="width: 350px;"
+                    class="form-control">
+                <br><br>
+
+                <div class="image-title-wrap">
+                    <button class="file-upload-btn" id="loginButton" style="width: 350px;">Login</button></a>
+                </div>
+            </form>
+        </div>
+
+
+        <div id="no_pass" style="display: none;">
+            <p style="font-family: 'Lucida Sans'; font-size: x-large; color: red;"><b>You have not entered a
+                    password!</b> </p>
+            <br>
+            <p style="font-family: 'Lucida Sans'; font-size: large;">Please enter the password sent to the admin email.
+            </p>
+        </div>
+
+        <div id="invalid_pass" style="display: none;">
+            <p style="font-family: 'Lucida Sans'; font-size: x-large; color: red;"><b>Incorrect
+                    password!</b> </p>
+            <br>
+            <p style="font-family: 'Lucida Sans'; font-size: large;">Please enter the password sent to the admin email.
+            </p>
+        </div>
+
+
+
+
+
+    </div>
+
+</body>
+
+<br>
+<br>
+<br>
+{% endblock %}

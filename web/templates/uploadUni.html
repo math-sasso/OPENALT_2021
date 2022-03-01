@@ -1,0 +1,173 @@
+<!--
+MIT License
+
+Copyright (c) 2020 tdbowman-CompSci-F2020
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
+{% extends 'bulkSearchTemplate.html' %}
+
+<!-- Anything you put here will be in the HTML head tags-->
+{% block head %}
+<script src="../static/js/upload.js"></script>
+
+<!--------------------------- Beginning of Salsabil's code --------------------------->
+
+<!-- Function to check to file size and whether it is larger than X MB -->
+<script>
+  $(function () {
+    let $uploadButton = $("#uploadButton");
+    let $maxSize = '{{ maxSize }}'
+
+    $uploadButton.click(function () {
+      var size = $("#fileUpload")[0].files[0].size;
+
+      // Check the size to see it in MB
+      size = size / 1048576;
+
+      // If size is greater than X MB
+      if (size > $maxSize) {
+        $("#invalid_file_size").dialog({
+          title: "ERROR",
+          modal: true,
+          minWidth: 700,
+          minHeight: 200,
+          buttons: {
+              Ok: function () {
+                $(location).attr('href', "/uploadUni"); 
+              }
+          }
+        });
+        return false;
+      }
+
+      return (true)
+    });
+
+  });
+</script>
+
+<!-- Function to check only csv files are being uploaded -->
+<script>
+  $(function () {
+    let $uploadButton = $("#uploadButton");
+
+    $uploadButton.click(function () {
+      let $fileName = $("#fileUpload");
+
+      // Only file extension allowed
+      var fileExtension = ['csv'];
+
+      // If file does not have the correct file extension, reload page
+      if ($.inArray($fileName.val().split('.').pop().toLowerCase(), fileExtension) == -1) {
+        $("#invalid_file_type").dialog({
+          title: "ERROR",
+          modal: true,
+          minWidth: 700,
+          minHeight: 200,
+          buttons: {
+              Ok: function () {
+                $(location).attr('href', "/uploadUni");
+              }
+          }
+        });
+        return false;
+      }
+      return (true);
+    });
+
+  });
+</script>
+<!------------------------------ End of Salsabil's code ------------------------------>
+
+{% endblock %}
+
+<!-- Anything you put here will be in the body-->
+{% block body %}
+<title>Upload University List</title>
+
+<body style="background-image: url('../static/images/library.jpg'); background-repeat: repeat-y; background-size:cover;">
+  
+  <div class="center-screen">
+
+    <div class = "center-screen" style="padding-top: 15px;">
+      <div style="width: 750px; border-radius: 25px; padding: 15px; background-color: rgba(60, 65, 70, 0.9); " >
+        <h1 style="text-align: center; color: aliceblue;"><b>Upload List of Universities</b></h1>
+          <form action="{{ url_for('uploadUni') }}" method="POST" enctype="multipart/form-data">
+            <div style="color:black;" class="image-upload-wrap">
+              <input class="file-upload-input"  id="fileUpload" name="csv/json" type='file' onchange="readURL(this);" accept=".csv" />
+              <div class="drag-text">
+                <h3 style="color:aliceblue;">Drag and drop a file or Click Box</h3>
+              </div>
+            </div>
+            
+            <div class="file-upload-content">
+              <div class="image-title-wrap">
+                <button type="submit"  id="uploadButton" style="width: 350px;" class="file-upload-btn">Upload File</button>
+              </div>
+            </div>
+  
+          </form>
+      </div>
+    </div>
+
+    <!--------------------------- Beginning of Salsabil's code --------------------------->
+    
+    <div id="invalid_file_type" style="display: none;">
+      <p style="font-family: 'Lucida Sans'; font-size: x-large; color: red;"><b>You have submitted an invalid file!</b> </p>
+      <br>
+      <p style="font-family: 'Lucida Sans'; font-size: large;">File must be a CSV file. Please upload a CSV file.</p>
+    </div>
+
+    <div id="invalid_file_size" style="display: none;">
+      <p style="font-family: 'Lucida Sans'; font-size: x-large; color: red;"><b>File size exceeds {{ maxSize }} MB!</b> </p>
+      <br>
+      <p style="font-family: 'Lucida Sans'; font-size: large;">Please upload a file that is less than {{ maxSize }} MB.</p>
+    </div>
+
+    <!------------------------------ End of Salsabil's code ------------------------------>
+
+    <br>
+
+    <div class="center-screen;">
+      <div style="width: 750px; border-radius: 25px; padding: 0px; background-color: rgba(60, 65, 70, 0.9); "
+        class="center-screen">
+        <h3 style="text-align: center; color: aliceblue;"><b>Instructions</b></h3>
+        <p1 style="text-align:left; color: aliceblue;">
+          <ol>
+            <li>Create a CSV file with a Microsoft Excel or a text editor such as Notepad++.</li>
+            <li style="padding-top: 5px;">Enter your list of universities in the <em>first</em> column and save the
+              file. </li>
+            <div style="text-align: center;"><img src="../static/images/uniTemplate.jpg" style="padding: 10px;"></div>
+            <li style="padding-top: 5px;">Click the box above and select your file. You may also drag the file directly
+              into the box.</li>
+          </ol>
+        </p1>
+        <br>
+      </div>
+    </div>
+
+
+  
+
+</body>
+
+
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'template.html' %}
+<!--
+MIT License
+
+Copyright (c) 2020 tdbowman-CompSci-F2020
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
+<!-- HTML head tags-->
+{% block head %}
+<!-- FOR CHART -->
+<!-- Load c3.css first -->
+<link href="../static/js/libraries/c3-0.7.20/c3.css" rel="stylesheet">
+
+<!-- Load d3 second -->
+<script src="../static/js/libraries/d3.v5/d3.v5.min.js"></script>
+
+<!-- Load c3 last (because it depends on d3) -->
+<script src="../static/js/libraries/c3-0.7.20/c3.min.js"></script>
+<!-- END CHART SECTION -->
+
+<!-- Load Ajax library to let webpage run asynchronus functions -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script>
+    $(function(){
+        // Grab the elements in bold then the last bold element within the class ".pagination-page-info". 
+        let $paginationBoldText = $(".pagination-page-info").children("b");
+        let $lastPaginationBoldText = $paginationBoldText.last();
+
+        // If the total records are less than 11, hide the "Per Page" Form.
+        if(parseInt($lastPaginationBoldText.text(),10) < 11){
+            $(".form-inline").hide();
+        }
+
+        // Grabs all elements (g) from the class ".c3-axis-y" and stores them as objects in $yAxis.
+        let $yAxis = $(".c3-axis-y");
+
+        // Grabs all the children elements (g) of class ".tick" and stores them as objects in $yAxisTicks. 
+        let $yAxisTicks = $yAxis.children(".tick");
+
+        //  setTimeout(function,x) executes a function after x milliseconds.
+        setTimeout(function(){
+            // Grabs the tick elements after the page loads with the new chart data.
+            $yAxis = $(".c3-axis-y");
+            $yAxisTicks = $yAxis.children(".tick");
+            // Loop through each tick object..
+            $yAxisTicks.each(function(){
+                // Store the label text of the tick into $tickText. 
+                let $tickText = $(this).children("text").text();
+
+                // If the label text is an empty string, remove the line associated with it.
+                if($tickText === ''){
+                    $(this).children("line").remove();
+                }
+            });
+        }, 500);
+    });
+</script>
+{% endblock %}
+
+<!-- Anything you put here will be in the body-->
+{% block body %}
+
+<div class = "container">
+    <!-- Headings -->
+    <h1>Journal Dashboard</h1>
+    
+    <div class="row">
+        <h3 style="text-align: center;">Papers published in {{ journal_name }} from {{ start_year }} - {{ end_year }}</h3>
+        <div class="col-sm-12" id="changeAfterChart">
+            <div id="chart"></div>
+        </div>
+        <h4 style="text-align: center;">Years</h4>
+    </div>
+
+    <!--Numbers of Pages dropdown menu -->
+    <div class="row">
+        <form class="form-inline" method="post" action="{{ url_for('journalDashboard') }}?journalName={{ journal_name }}" >
+            <select name="perPage" id="perPage" class="resizedTextbox form-control" >
+                  <option value="" disabled selected>Per Page</option>
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+            </select>
+            <button type="submit" class=" resizedTextbox btn btn-default">Apply</button>
+        </form>
+    <div class="col-md-12">
+        <hr>
+        
+        <div id="pContent">
+
+            <table id="noBorders">
+            {{pagination.info}}
+            {{pagination.links}}
+
+            <!--Loop of article rows -->
+            {% for journal in journal_list[article_start:article_end] %}
+            <tr>
+
+            <td class='item-data'>
+
+                <div class="JD_articleTitle">
+                    <a href="{{ url_for('articleDashboard') }}?DOI={{ journal.objectID }}">{{ journal.articleTitle }}</a>
+                </div>
+
+                 <div class="JD_issue">
+                    <strong>Issue:</strong>
+                    {{ journal.issue }}
+                </div>
+                 <div class="JD_journalPage">
+                    <strong>Page Number:</strong>
+                    {{ journal.journalPage }}
+                </div>
+                <div class="JD_articleDate">
+                    <strong>Date Published:</strong> {{ journal.articleDate }}
+                </div>
+                <div class="JD_authors">
+                    <strong>Author(s):</strong>
+                    {% for author in journal.author_list %}
+                        {% if author == journal.author_list[-1]: %}
+                            <a href="{{ url_for('authorDashboard') }}?author_id={{ author.id }}">{{ author.name }}</a>
+                        {%else:%}
+                            <a href="{{ url_for('authorDashboard') }}?author_id={{ author.id }}">{{ author.name }},</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="JD_DOI">
+                    <strong>DOI:</strong>
+                    <a href="https://doi.org/{{ journal.objectID }}"target="_blank">{{ journal.objectID }} &#8599;</a>
+                </div>
+                <div class="JD_DOI">
+					<strong>Total Events:</strong> {{journal.totalEventsSum}}
+				</div>
+                </td>
+                </tr>
+            {% endfor %}
+            </table>
+
+            {{pagination.links}}
+			</div>
+    </div>
+    </div>
+</div>
+</div> <!-- End container wrapping entire page-->
+<br>
+<br>
+<br>
+
+<!-- Initialize the arrays as empty arrays -->
+<script>
+    publishedPerYr=[]
+    const journalName = "{{ journal_name }}"
+</script>
+
+{% for index in publishedPerYear %}
+<script>
+    publishedPerYr.push("{{ index }}");
+</script>
+{% endfor %}
+
+<script>
+    years_list = [];
+</script>
+
+{% for year in years_list %}
+<script>
+    years_list.push("{{ year }}")
+</script>
+{% endfor %}
+
+<!-- Load JS for chart -->
+<!--
+    #Author: 
+    #Name: Mohammad Tahmid 
+    #Lines 16-17, 169-186
+    #---------------------
+    #Date: 03/23/2021
+    #Description: Calls an ajax fucntion to handle loading all the information for the chart on the website. This makes it so
+                    only the webpage with some of the metadata is loaded and displayed to the user instead waiting till the graph is loaded
+                    with all the events in the database.     
+-->
+<script>
+    $(document).ready(function(){
+        $.ajaxSetup({
+            cache: true
+        });
+
+        $.getScript("../static/js/journalChart.js");
+    });
+</script>
+{% endblock %}

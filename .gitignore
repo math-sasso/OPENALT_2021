@@ -1,0 +1,14 @@
+.ipynb_checkpoints*
+__pycache__*
+.DS_Store*
+ingest.log*
+.idea*
+passwd.txt*
+/web/env
+/web/venv
+.log
+.zip
+/eventData
+json_info.csv*
+*.log
+
