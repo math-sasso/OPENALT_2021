@@ -11,4 +11,5 @@ passwd.txt*
 /eventData
 json_info.csv*
 *.log
-
+/Apache2 Files
+/openal_env
